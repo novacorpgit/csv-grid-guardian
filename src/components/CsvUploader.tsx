@@ -20,6 +20,7 @@ interface CsvUploaderProps {
 const CsvUploader: React.FC<CsvUploaderProps> = ({ onDataValidated }) => {
   const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const validateHeaders = (headers: string[]) => {
     const missingHeaders = REQUIRED_HEADERS.filter(
@@ -29,6 +30,7 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onDataValidated }) => {
   };
 
   const handleFile = async (file: File) => {
+    setIsUploading(true);
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
@@ -44,6 +46,7 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onDataValidated }) => {
             description: `Missing required headers: ${missingHeaders.join(', ')}`,
             variant: "destructive"
           });
+          setIsUploading(false);
           return;
         }
 
@@ -57,6 +60,8 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onDataValidated }) => {
             }, {});
           });
 
+        console.log("Prepared data for upload:", data.length, "rows");
+
         const { error } = await supabase
           .from('csv_uploads')
           .insert({
@@ -69,11 +74,13 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onDataValidated }) => {
           });
 
         if (error) {
+          console.error("Upload error:", error);
           toast({
             title: "Error",
-            description: "Failed to store CSV data",
+            description: "Failed to store CSV data: " + error.message,
             variant: "destructive"
           });
+          setIsUploading(false);
           return;
         }
 
@@ -83,13 +90,18 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onDataValidated }) => {
         });
         
         onDataValidated(data);
+        
+        // Force reload to update the tabs with the new data
+        window.location.reload();
       } catch (error) {
+        console.error("Processing error:", error);
         toast({
           title: "Error",
           description: "Failed to process CSV file. Please check the format.",
           variant: "destructive"
         });
       }
+      setIsUploading(false);
     };
     reader.readAsText(file);
   };
@@ -145,10 +157,11 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onDataValidated }) => {
           onChange={onFileSelect}
           className="hidden"
           id="file-upload"
+          disabled={isUploading}
         />
         <label htmlFor="file-upload">
-          <Button variant="outline" asChild>
-            <span>Select CSV File</span>
+          <Button variant="outline" asChild disabled={isUploading}>
+            <span>{isUploading ? "Uploading..." : "Select CSV File"}</span>
           </Button>
         </label>
       </div>
