@@ -1,4 +1,3 @@
-
 import React, { useCallback, useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -27,9 +26,9 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onDataValidated }) => {
     return missingHeaders.length === 0 ? null : missingHeaders;
   };
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const text = event.target?.result as string;
         const lines = text.split('\n');
@@ -56,9 +55,29 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onDataValidated }) => {
             }, {});
           });
 
+        const { error } = await supabase
+          .from('csv_uploads')
+          .insert({
+            file_name: file.name,
+            data,
+            headers,
+            version: 1,
+            customer_id: 'default', // You can update this based on your needs
+            is_active: true
+          });
+
+        if (error) {
+          toast({
+            title: "Error",
+            description: "Failed to store CSV data",
+            variant: "destructive"
+          });
+          return;
+        }
+
         toast({
           title: "Success",
-          description: "CSV file validated and loaded successfully",
+          description: "CSV file validated and stored successfully",
         });
         
         onDataValidated(data);

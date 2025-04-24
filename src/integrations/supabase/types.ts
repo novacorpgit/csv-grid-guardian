@@ -12,27 +12,36 @@ export type Database = {
       csv_uploads: {
         Row: {
           created_at: string
+          customer_id: string | null
           data: Json
           file_name: string
           headers: Json
           id: string
+          is_active: boolean | null
           updated_at: string
+          version: number | null
         }
         Insert: {
           created_at?: string
+          customer_id?: string | null
           data: Json
           file_name: string
           headers: Json
           id?: string
+          is_active?: boolean | null
           updated_at?: string
+          version?: number | null
         }
         Update: {
           created_at?: string
+          customer_id?: string | null
           data?: Json
           file_name?: string
           headers?: Json
           id?: string
+          is_active?: boolean | null
           updated_at?: string
+          version?: number | null
         }
         Relationships: []
       }

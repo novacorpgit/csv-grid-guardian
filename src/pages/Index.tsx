@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import CsvUploader from '@/components/CsvUploader';
-import DataGrid from '@/components/DataGrid';
+import PricingTabs from '@/components/PricingTabs';
 
 const Index = () => {
   const [gridData, setGridData] = useState<any[]>([]);
@@ -17,12 +17,10 @@ const Index = () => {
         <CsvUploader onDataValidated={setGridData} />
       </div>
       
-      {gridData.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Data Preview</h2>
-          <DataGrid data={gridData} />
-        </div>
-      )}
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Data Preview</h2>
+        <PricingTabs />
+      </div>
     </div>
   );
 };
