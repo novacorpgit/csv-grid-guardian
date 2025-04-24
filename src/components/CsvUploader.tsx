@@ -1,9 +1,8 @@
 
 import React, { useCallback, useState } from 'react';
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { FileUp } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 const REQUIRED_HEADERS = [
   'Item ID', 'Item_Name', 'Part_Number', 'Supplier', 'Category', 'Subcategory',
@@ -20,7 +19,6 @@ interface CsvUploaderProps {
 const CsvUploader: React.FC<CsvUploaderProps> = ({ onDataValidated }) => {
   const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
 
   const validateHeaders = (headers: string[]) => {
     const missingHeaders = REQUIRED_HEADERS.filter(
@@ -29,10 +27,9 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onDataValidated }) => {
     return missingHeaders.length === 0 ? null : missingHeaders;
   };
 
-  const handleFile = async (file: File) => {
-    setIsUploading(true);
+  const handleFile = (file: File) => {
     const reader = new FileReader();
-    reader.onload = async (event) => {
+    reader.onload = (event) => {
       try {
         const text = event.target?.result as string;
         const lines = text.split('\n');
@@ -46,7 +43,6 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onDataValidated }) => {
             description: `Missing required headers: ${missingHeaders.join(', ')}`,
             variant: "destructive"
           });
-          setIsUploading(false);
           return;
         }
 
@@ -60,48 +56,19 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onDataValidated }) => {
             }, {});
           });
 
-        console.log("Prepared data for upload:", data.length, "rows");
-
-        const { error } = await supabase
-          .from('csv_uploads')
-          .insert({
-            file_name: file.name,
-            data,
-            headers,
-            version: 1,
-            customer_id: 'default', // You can update this based on your needs
-            is_active: true
-          });
-
-        if (error) {
-          console.error("Upload error:", error);
-          toast({
-            title: "Error",
-            description: "Failed to store CSV data: " + error.message,
-            variant: "destructive"
-          });
-          setIsUploading(false);
-          return;
-        }
-
         toast({
           title: "Success",
-          description: "CSV file validated and stored successfully",
+          description: "CSV file validated and loaded successfully",
         });
         
         onDataValidated(data);
-        
-        // Force reload to update the tabs with the new data
-        window.location.reload();
       } catch (error) {
-        console.error("Processing error:", error);
         toast({
           title: "Error",
           description: "Failed to process CSV file. Please check the format.",
           variant: "destructive"
         });
       }
-      setIsUploading(false);
     };
     reader.readAsText(file);
   };
@@ -157,11 +124,10 @@ const CsvUploader: React.FC<CsvUploaderProps> = ({ onDataValidated }) => {
           onChange={onFileSelect}
           className="hidden"
           id="file-upload"
-          disabled={isUploading}
         />
         <label htmlFor="file-upload">
-          <Button variant="outline" asChild disabled={isUploading}>
-            <span>{isUploading ? "Uploading..." : "Select CSV File"}</span>
+          <Button variant="outline" asChild>
+            <span>Select CSV File</span>
           </Button>
         </label>
       </div>
